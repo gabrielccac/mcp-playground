@@ -5,15 +5,9 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from dotenv import load_dotenv
 load_dotenv()
 
-from agents import Agent, Runner
+from agents import Agent, Runner, function_tool
 
-from tools import (
-    buscar_licitacoes,
-    obter_documentos_licitacao,
-    obter_historico_licitacao,
-    obter_itens_licitacao,
-    obter_resultado_item_licitacao,
-)
+from tools import FERRAMENTAS
 
 agent = Agent(
     name="Agente de Licitações PNCP",
@@ -26,13 +20,7 @@ agent = Agent(
         "documentos ou histórico. "
         "Responda de forma objetiva e em português."
     ),
-    tools=[
-        buscar_licitacoes,
-        obter_itens_licitacao,
-        obter_resultado_item_licitacao,
-        obter_documentos_licitacao,
-        obter_historico_licitacao,
-    ],
+    tools=[function_tool(fn) for fn in FERRAMENTAS],
 )
 
 
