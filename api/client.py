@@ -11,6 +11,7 @@ SEARCH_URL = "https://pncp.gov.br/api/search/"
 _http = httpx.Client(
     headers={"User-Agent": "Mozilla/5.0 (compatible; pncp-client/1.0)"},
     timeout=30,
+    http2=False,
 )
 
 # ---------------------------------------------------------------------------
