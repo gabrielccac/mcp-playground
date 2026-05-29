@@ -8,7 +8,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from dotenv import load_dotenv
 load_dotenv()
 
-from openai import OpenAI
+from openai import OpenAI, RateLimitError
 from mcp import ClientSession
 from mcp.client.streamable_http import streamablehttp_client
 
@@ -54,13 +54,22 @@ async def _call_tool(name: str, args: dict) -> str:
     return "\n".join(parts) or "[]"
 
 
+def _complete(messages, tools):
+    wait = 2
+    for attempt in range(5):
+        try:
+            return client.chat.completions.create(model=MODEL, messages=messages, tools=tools)
+        except RateLimitError:
+            if attempt == 4:
+                raise
+            print(f"[Rate limit — waiting {wait}s...]")
+            import time; time.sleep(wait)
+            wait *= 2
+
+
 async def _run(messages: list, tools: list) -> tuple[str, list]:
     for _ in range(MAX_TURNS):
-        response = client.chat.completions.create(
-            model=MODEL,
-            messages=messages,
-            tools=tools,
-        )
+        response = _complete(messages, tools)
         msg = response.choices[0].message
         messages.append(msg)
 
