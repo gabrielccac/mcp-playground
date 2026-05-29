@@ -1,4 +1,5 @@
 """Quick script to verify AIRTABLE_TOKEN and probe the MCP endpoint."""
+import json
 import os
 import httpx
 from dotenv import load_dotenv
@@ -10,14 +11,29 @@ if not token:
     raise SystemExit(1)
 
 url = "https://mcp.airtable.com/mcp"
-headers = {"Authorization": f"Bearer {token}"}
-
 print(f"Token: {token[:8]}...{token[-4:]}")
 print(f"URL: {url}\n")
 
-for method in ("GET", "POST"):
-    try:
-        resp = httpx.request(method, url, headers=headers, timeout=10)
-        print(f"{method} {resp.status_code}: {resp.text[:200]}")
-    except Exception as e:
-        print(f"{method} ERROR: {e}")
+# Proper MCP Streamable HTTP initialization request
+headers = {
+    "Authorization": f"Bearer {token}",
+    "Content-Type": "application/json",
+    "Accept": "application/json, text/event-stream",
+}
+body = {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "initialize",
+    "params": {
+        "protocolVersion": "2025-03-26",
+        "capabilities": {},
+        "clientInfo": {"name": "test", "version": "0.1"},
+    },
+}
+
+try:
+    resp = httpx.post(url, headers=headers, json=body, timeout=10)
+    print(f"POST {resp.status_code}")
+    print(resp.text[:500])
+except Exception as e:
+    print(f"POST ERROR: {e}")
