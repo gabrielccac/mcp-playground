@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from agents import Agent, Runner
-from agents.mcp import MCPServerSse
+from agents.mcp import MCPServerStreamableHttp
 
 AIRTABLE_MCP_URL = "https://mcp.airtable.com/mcp"
 MAX_TURNS = 20
@@ -22,7 +22,7 @@ INSTRUCTIONS = (
 
 def _make_airtable_server():
     token = os.environ.get("AIRTABLE_TOKEN", "")
-    return MCPServerSse(
+    return MCPServerStreamableHttp(
         params={
             "url": AIRTABLE_MCP_URL,
             "headers": {"Authorization": f"Bearer {token}"},
