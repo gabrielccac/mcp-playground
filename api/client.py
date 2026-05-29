@@ -99,9 +99,10 @@ def search(
     resp.raise_for_status()
     data = resp.json()
 
+    total = data.get("total", 0)
     return SearchPage(
         items=data.get("items", []),
-        total_registros=data.get("totalRegistros", 0),
-        total_paginas=data.get("totalPaginas", 0),
-        pagina=data.get("numeroPagina", pagina),
+        total_registros=total,
+        total_paginas=-(-total // tam_pagina),  # ceil division
+        pagina=pagina,
     )

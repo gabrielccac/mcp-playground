@@ -16,6 +16,6 @@ cases = [
 for case in cases:
     label = case.pop("label")
     page = search(**case, tam_pagina=3)
-    print(f"\n── {label} ({page['total_registros']} results) ──")
+    print(f"\n── {label} ({page['total_registros']} results, {page['total_paginas']} pages) ──")
     for r in page["items"]:
         print(f"  [{r.get('uf')}] {r.get('title', '')[:72]}")
