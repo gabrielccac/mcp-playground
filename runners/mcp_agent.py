@@ -1,4 +1,5 @@
 import asyncio
+import os
 import sys
 import time
 from pathlib import Path
@@ -17,20 +18,43 @@ MAX_TURNS = 20
 MAX_RETRIES = 4
 
 INSTRUCTIONS = (
-    "Você é um assistente especializado em licitações públicas brasileiras. "
-    "Use as ferramentas disponíveis para buscar e analisar licitações no PNCP. "
-    "Quando o usuário fornecer uma URL do PNCP, use extrair_dados_url_pncp primeiro "
-    "para obter cnpj_orgao, ano e sequencial antes de chamar outras ferramentas. "
-    "Complete tarefas de forma autônoma e integralmente — faça todas as consultas "
-    "necessárias antes de apresentar a resposta final. "
-    "Nunca interrompa a tarefa no meio para pedir confirmação do usuário. "
-    "Responda de forma objetiva e em português."
+    "You are a specialist in Brazilian public procurement (licitações). "
+    "You have two sets of tools: PNCP tools for searching and retrieving tender data, "
+    "and Airtable tools for saving and managing records in the database. "
+    "\n\n"
+    "PNCP tools:\n"
+    "- When the user provides a PNCP URL, always call extrair_dados_url_pncp first "
+    "to extract cnpj_orgao, ano, and sequencial before calling any other tool.\n"
+    "- Status values for editais: 'recebendo_proposta' (open), 'propostas_encerradas' "
+    "(under judgment), 'encerradas' (concluded, results available).\n"
+    "\n"
+    "Airtable tools:\n"
+    "- When the user asks to save, track, or add a tender to the database, use the "
+    "Airtable tools to create or update the corresponding record.\n"
+    "- When the user asks to list or check saved tenders, query Airtable.\n"
+    "\n"
+    "General rules:\n"
+    "- Complete tasks fully and autonomously — make all necessary tool calls before "
+    "presenting the final answer.\n"
+    "- Never stop mid-task to ask for confirmation.\n"
+    "- Reply objectively in the same language the user writes in."
 )
 
 
-def _make_server():
+def _make_pncp_server():
     return MCPServerStdio(
         params={"command": "python", "args": [SERVER_SCRIPT]},
+        cache_tools_list=True,
+    )
+
+
+def _make_airtable_server():
+    return MCPServerStdio(
+        params={
+            "command": "npx",
+            "args": ["-y", "@airtable/mcp-server"],
+            "env": {**os.environ, "AIRTABLE_API_KEY": os.environ.get("AIRTABLE_API_KEY", "")},
+        },
         cache_tools_list=True,
     )
 
@@ -43,26 +67,26 @@ async def _run_with_retry(agent, messages):
         except RateLimitError:
             if attempt == MAX_RETRIES - 1:
                 raise
-            print(f"[Rate limit — aguardando {wait}s...]")
+            print(f"[Rate limit — waiting {wait}s...]")
             await asyncio.sleep(wait)
             wait *= 2
 
 
 async def _run(prompt: str) -> str:
-    async with _make_server() as server:
-        agent = Agent(name="Agente MCP PNCP", instructions=INSTRUCTIONS, mcp_servers=[server])
+    async with _make_pncp_server() as pncp, _make_airtable_server() as airtable:
+        agent = Agent(name="PNCP Agent", instructions=INSTRUCTIONS, mcp_servers=[pncp, airtable])
         result = await Runner.run(agent, prompt, max_turns=MAX_TURNS)
     return result.final_output
 
 
 async def _session():
-    print("Agente MCP PNCP — digite 'sair' para encerrar.\n")
-    async with _make_server() as server:
-        agent = Agent(name="Agente MCP PNCP", instructions=INSTRUCTIONS, mcp_servers=[server])
+    print("PNCP Agent — type 'exit' to quit.\n")
+    async with _make_pncp_server() as pncp, _make_airtable_server() as airtable:
+        agent = Agent(name="PNCP Agent", instructions=INSTRUCTIONS, mcp_servers=[pncp, airtable])
         messages = []
         while True:
             try:
-                user_input = input("Você: ").strip()
+                user_input = input("You: ").strip()
             except (EOFError, KeyboardInterrupt):
                 break
             if user_input.lower() in ("sair", "exit", "quit"):
@@ -73,11 +97,11 @@ async def _session():
             try:
                 result = await _run_with_retry(agent, messages)
             except RateLimitError:
-                print("Erro: limite de requisições atingido. Tente novamente em alguns minutos.\n")
+                print("Error: rate limit reached. Try again in a few minutes.\n")
                 messages.pop()
                 continue
             messages = result.to_input_list()
-            print(f"\nAgente: {result.final_output}\n")
+            print(f"\nAgent: {result.final_output}\n")
 
 
 def run(prompt: str) -> str:
