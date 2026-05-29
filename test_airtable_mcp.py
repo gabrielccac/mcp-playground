@@ -29,9 +29,17 @@ async def main():
             for t in tools.tools:
                 print(f"  {t.name}")
 
-            print("\n=== list_bases ===")
+            print("\n=== list_bases (raw) ===")
             result = await session.call_tool("list_bases", {})
+            print(f"content items: {len(result.content)}")
+            print(f"is_error: {result.isError}")
             for item in result.content:
-                print(item)
+                print(f"  type={item.type!r}  text={getattr(item, 'text', None)!r}")
+
+            print("\n=== list_workspaces (raw) ===")
+            result2 = await session.call_tool("list_workspaces", {})
+            print(f"content items: {len(result2.content)}")
+            for item in result2.content:
+                print(f"  type={item.type!r}  text={getattr(item, 'text', None)!r}")
 
 asyncio.run(main())
