@@ -1,7 +1,11 @@
-"""Response types for the PNCP search API."""
+"""Response types for the PNCP API."""
 
 from typing import TypedDict
 
+
+# ---------------------------------------------------------------------------
+# Search endpoint types
+# ---------------------------------------------------------------------------
 
 class SearchItem(TypedDict, total=False):
     id: str
@@ -41,10 +45,66 @@ class SearchItem(TypedDict, total=False):
     cancelado: bool | None
     tem_resultado: bool | None
     exigencia_conteudo_nacional: bool | None
+    numero_sequencial: str | None
+    ano: str | None
 
 
 class SearchResponse(TypedDict):
     items: list[SearchItem]
-    total: int        # as returned by the API
-    total_paginas: int  # computed: ceil(total / tam_pagina)
+    total: int
+    total_paginas: int
     pagina: int
+
+
+# ---------------------------------------------------------------------------
+# Tender sub-resource types (camelCase — matches API response directly)
+# ---------------------------------------------------------------------------
+
+class TenderItem(TypedDict, total=False):
+    numeroItem: int
+    descricao: str
+    materialOuServico: str
+    materialOuServicoNome: str
+    valorUnitarioEstimado: float | None
+    valorTotal: float | None
+    quantidade: float
+    unidadeMedida: str
+    criterioJulgamentoId: int | None
+    criterioJulgamentoNome: str | None
+    situacaoCompraItem: int | None
+    situacaoCompraItemNome: str | None
+    temResultado: bool
+    dataInclusao: str | None
+    dataAtualizacao: str | None
+    orcamentoSigiloso: bool
+
+
+class TenderDocument(TypedDict, total=False):
+    uri: str
+    url: str
+    cnpj: str
+    tipoDocumentoId: int | None
+    tipoDocumentoDescricao: str | None
+    tipoDocumentoNome: str | None
+    statusAtivo: bool
+    anoCompra: int
+    sequencialCompra: int
+    dataPublicacaoPncp: str | None
+    titulo: str | None
+    sequencialDocumento: int
+
+
+class TenderHistoryEvent(TypedDict, total=False):
+    justificativa: str | None
+    tipoLogManutencao: int
+    tipoLogManutencaoNome: str | None
+    categoriaLogManutencao: int
+    categoriaLogManutencaoNome: str | None
+    logManutencaoDataInclusao: str | None
+    usuarioNome: str | None
+    compraOrgaoCnpj: str | None
+    compraAno: int | None
+    compraSequencial: int | None
+    documentoTipo: str | None
+    documentoTitulo: str | None
+    documentoSequencial: int | None

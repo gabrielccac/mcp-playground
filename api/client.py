@@ -1,12 +1,19 @@
-"""PNCP API — search endpoint."""
+"""PNCP API — search and tender endpoints."""
 
 from typing import Literal
 
 from curl_cffi import requests
 
-from .models import SearchItem, SearchResponse
+from .models import (
+    SearchItem,
+    SearchResponse,
+    TenderDocument,
+    TenderHistoryEvent,
+    TenderItem,
+)
 
 SEARCH_URL = "https://pncp.gov.br/api/search/"
+PNCP_BASE  = "https://pncp.gov.br/api/pncp/v1"
 
 _session = requests.Session(impersonate="chrome")
 
@@ -46,7 +53,19 @@ Modalidade = Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
 # 11=Pré-Qualificação, 12=Credenciamento, 13=Leilão Presencial
 
 # ---------------------------------------------------------------------------
-# Endpoints
+# Helpers
+# ---------------------------------------------------------------------------
+
+def _get(url: str, params: dict | None = None) -> requests.Response:
+    resp = _session.get(url, params=params, timeout=30)
+    resp.raise_for_status()
+    return resp
+
+def _tender_base(orgao_cnpj: str, ano: int, sequencial: int) -> str:
+    return f"{PNCP_BASE}/orgaos/{orgao_cnpj}/compras/{ano}/{sequencial}"
+
+# ---------------------------------------------------------------------------
+# Search
 # ---------------------------------------------------------------------------
 
 def search(
@@ -95,14 +114,89 @@ def search(
         ),
     }.items() if v is not None}
 
-    resp = _session.get(SEARCH_URL, params=params, timeout=30)
-    resp.raise_for_status()
-    data = resp.json()
-
+    data = _get(SEARCH_URL, params).json()
     total = data.get("total", 0)
+
     return SearchResponse(
         items=data.get("items", []),
         total=total,
         total_paginas=-(-total // tam_pagina),
         pagina=pagina,
     )
+
+# ---------------------------------------------------------------------------
+# Tender details (requires captcha — mocked)
+# ---------------------------------------------------------------------------
+
+def get_tender(orgao_cnpj: str, ano: int, sequencial: int, captcha: str = "") -> dict:
+    """Get full tender details. Requires a captcha token — returns mock until integrated."""
+    if not captcha:
+        return {
+            "mocked": True,
+            "orgao_cnpj": orgao_cnpj,
+            "ano": ano,
+            "sequencial": sequencial,
+            "note": "captcha token required to call portal endpoint",
+        }
+    url = f"{_tender_base(orgao_cnpj, ano, sequencial)}/portal"
+    return _get(url, {"captcha": captcha}).json()
+
+# ---------------------------------------------------------------------------
+# Tender items
+# ---------------------------------------------------------------------------
+
+def get_tender_items_count(orgao_cnpj: str, ano: int, sequencial: int) -> int:
+    """Total number of items in a tender."""
+    url = f"{_tender_base(orgao_cnpj, ano, sequencial)}/itens/quantidade"
+    return _get(url).json()
+
+def get_tender_items(
+    orgao_cnpj: str,
+    ano: int,
+    sequencial: int,
+    pagina: int = 1,
+    tamanho_pagina: int = 20,
+) -> list[TenderItem]:
+    """Items (products/services) being procured in a tender."""
+    url = f"{_tender_base(orgao_cnpj, ano, sequencial)}/itens"
+    return _get(url, {"pagina": pagina, "tamanhoPagina": tamanho_pagina}).json()
+
+# ---------------------------------------------------------------------------
+# Tender documents
+# ---------------------------------------------------------------------------
+
+def get_tender_documents_count(orgao_cnpj: str, ano: int, sequencial: int) -> int:
+    """Total number of attached documents in a tender."""
+    url = f"{_tender_base(orgao_cnpj, ano, sequencial)}/arquivos/quantidade"
+    return _get(url).json()
+
+def get_tender_documents(
+    orgao_cnpj: str,
+    ano: int,
+    sequencial: int,
+    pagina: int = 1,
+    tamanho_pagina: int = 20,
+) -> list[TenderDocument]:
+    """Attached documents (edital, annexes, etc.) for a tender."""
+    url = f"{_tender_base(orgao_cnpj, ano, sequencial)}/arquivos"
+    return _get(url, {"pagina": pagina, "tamanhoPagina": tamanho_pagina}).json()
+
+# ---------------------------------------------------------------------------
+# Tender history
+# ---------------------------------------------------------------------------
+
+def get_tender_history_count(orgao_cnpj: str, ano: int, sequencial: int) -> int:
+    """Total number of history events for a tender."""
+    url = f"{_tender_base(orgao_cnpj, ano, sequencial)}/historico/quantidade"
+    return _get(url).json()
+
+def get_tender_history(
+    orgao_cnpj: str,
+    ano: int,
+    sequencial: int,
+    pagina: int = 1,
+    tamanho_pagina: int = 20,
+) -> list[TenderHistoryEvent]:
+    """Audit log / history of changes for a tender."""
+    url = f"{_tender_base(orgao_cnpj, ano, sequencial)}/historico"
+    return _get(url, {"pagina": pagina, "tamanhoPagina": tamanho_pagina}).json()
