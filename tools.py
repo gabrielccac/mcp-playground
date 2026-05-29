@@ -21,8 +21,8 @@ def buscar_licitacoes(
     tipo_documento: Literal["edital", "ata", "contrato"] = "edital",
     ordenacao: Literal["-data", "data", "relevancia"] = "-data",
     status: Literal[
-        "recebendo_proposta", "propostas_encerradas", "em_julgamento",
-        "homologada", "revogada", "anulada", "cancelada"
+        "recebendo_proposta", "propostas_encerradas", "encerradas",
+        "vigente", "nao_vigente",
     ] | None = None,
     uf: Literal[
         "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA",
@@ -41,8 +41,9 @@ def buscar_licitacoes(
         consulta: Termo de busca (ex: 'toner', 'consultoria de TI', 'obras')
         tipo_documento: Tipo do documento — 'edital' (padrão), 'ata' ou 'contrato'
         ordenacao: Ordenação — '-data' (mais recentes, padrão), 'data' (mais antigos), 'relevancia'
-        status: Situação — 'recebendo_proposta' (abertas), 'propostas_encerradas' (encerradas).
-                Deixar vazio retorna todos os status.
+        status: Situação do edital — 'recebendo_proposta' (abertas), 'propostas_encerradas'
+                (em julgamento), 'encerradas' (concluídas, resultados disponíveis).
+                Para contratos use 'vigente' ou 'nao_vigente'. Vazio retorna todos.
         uf: Sigla do estado (ex: 'SP', 'RJ', 'MG'). Vazio busca em todo o Brasil.
         modalidade: Código da modalidade — 6=Pregão Eletrônico, 7=Pregão Presencial,
                     8=Dispensa de Licitação, 9=Inexigibilidade, 4=Concorrência Eletrônica.
@@ -92,7 +93,7 @@ def listar_resultados_item(
     """
     Retorna o resultado/vencedor de um item específico de uma licitação encerrada.
 
-    Disponível apenas para licitações com 'tem_resultado' = true no item.
+    Disponível apenas para licitações com status 'encerradas' e campo 'tem_resultado' = true.
 
     Args:
         cnpj_orgao: CNPJ do órgão responsável
