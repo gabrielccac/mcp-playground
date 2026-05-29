@@ -1,4 +1,4 @@
 from .client import search
-from .models import SearchPage, SearchResult
+from .models import SearchItem, SearchResponse
 
-__all__ = ["search", "SearchPage", "SearchResult"]
+__all__ = ["search", "SearchItem", "SearchResponse"]

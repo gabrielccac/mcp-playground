@@ -3,7 +3,7 @@
 from typing import TypedDict
 
 
-class SearchResult(TypedDict, total=False):
+class SearchItem(TypedDict, total=False):
     id: str
     title: str
     description: str
@@ -43,8 +43,8 @@ class SearchResult(TypedDict, total=False):
     exigencia_conteudo_nacional: bool | None
 
 
-class SearchPage(TypedDict):
-    items: list[SearchResult]
-    total_registros: int
-    total_paginas: int
+class SearchResponse(TypedDict):
+    items: list[SearchItem]
+    total: int        # as returned by the API
+    total_paginas: int  # computed: ceil(total / tam_pagina)
     pagina: int

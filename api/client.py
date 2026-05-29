@@ -4,7 +4,7 @@ from typing import Literal
 
 from curl_cffi import requests
 
-from .models import SearchPage
+from .models import SearchItem, SearchResponse
 
 SEARCH_URL = "https://pncp.gov.br/api/search/"
 
@@ -67,7 +67,7 @@ def search(
     tipos_margens_preferencia: str | None = None,
     exigencia_conteudo_nacional: bool | None = None,
     possui_emenda_parlamentar: bool | None = None,
-) -> SearchPage:
+) -> SearchResponse:
     """Full-text search across PNCP editais, contratos and atas."""
     params = {k: v for k, v in {
         "q": q,
@@ -100,9 +100,9 @@ def search(
     data = resp.json()
 
     total = data.get("total", 0)
-    return SearchPage(
+    return SearchResponse(
         items=data.get("items", []),
-        total_registros=total,
-        total_paginas=-(-total // tam_pagina),  # ceil division
+        total=total,
+        total_paginas=-(-total // tam_pagina),
         pagina=pagina,
     )
