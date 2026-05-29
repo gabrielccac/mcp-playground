@@ -2,17 +2,14 @@
 
 from typing import Literal
 
-import httpx
+import requests
 
 from .models import SearchPage
 
 SEARCH_URL = "https://pncp.gov.br/api/search/"
 
-_http = httpx.Client(
-    headers={"User-Agent": "Mozilla/5.0 (compatible; pncp-client/1.0)"},
-    timeout=30,
-    http2=False,
-)
+_session = requests.Session()
+_session.headers.update({"User-Agent": "Mozilla/5.0 (compatible; pncp-client/1.0)"})
 
 # ---------------------------------------------------------------------------
 # Param types
@@ -99,7 +96,9 @@ def search(
         ),
     }.items() if v is not None}
 
-    data = _http.get(SEARCH_URL, params=params).raise_for_status().json()
+    resp = _session.get(SEARCH_URL, params=params, timeout=30)
+    resp.raise_for_status()
+    data = resp.json()
 
     return SearchPage(
         items=data.get("items", []),
