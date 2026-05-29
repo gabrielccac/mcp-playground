@@ -1,3 +1,4 @@
+import asyncio
 import sys
 import time
 from pathlib import Path
@@ -34,29 +35,29 @@ def _make_server():
     )
 
 
-def _run_with_retry(agent, messages):
+async def _run_with_retry(agent, messages):
     wait = 5
     for attempt in range(MAX_RETRIES):
         try:
-            return Runner.run_sync(agent, input=messages, max_turns=MAX_TURNS)
+            return await Runner.run(agent, input=messages, max_turns=MAX_TURNS)
         except RateLimitError:
             if attempt == MAX_RETRIES - 1:
                 raise
             print(f"[Rate limit — aguardando {wait}s...]")
-            time.sleep(wait)
+            await asyncio.sleep(wait)
             wait *= 2
 
 
-def run(prompt: str) -> str:
-    with _make_server() as server:
+async def _run(prompt: str) -> str:
+    async with _make_server() as server:
         agent = Agent(name="Agente MCP PNCP", instructions=INSTRUCTIONS, mcp_servers=[server])
-        result = Runner.run_sync(agent, prompt, max_turns=MAX_TURNS)
+        result = await Runner.run(agent, prompt, max_turns=MAX_TURNS)
     return result.final_output
 
 
-def session():
+async def _session():
     print("Agente MCP PNCP — digite 'sair' para encerrar.\n")
-    with _make_server() as server:
+    async with _make_server() as server:
         agent = Agent(name="Agente MCP PNCP", instructions=INSTRUCTIONS, mcp_servers=[server])
         messages = []
         while True:
@@ -70,13 +71,21 @@ def session():
                 continue
             messages.append({"role": "user", "content": user_input})
             try:
-                result = _run_with_retry(agent, messages)
+                result = await _run_with_retry(agent, messages)
             except RateLimitError:
                 print("Erro: limite de requisições atingido. Tente novamente em alguns minutos.\n")
                 messages.pop()
                 continue
             messages = result.to_input_list()
             print(f"\nAgente: {result.final_output}\n")
+
+
+def run(prompt: str) -> str:
+    return asyncio.run(_run(prompt))
+
+
+def session():
+    asyncio.run(_session())
 
 
 if __name__ == "__main__":
