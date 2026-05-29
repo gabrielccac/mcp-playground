@@ -1,26 +1,19 @@
-"""Cliente HTTP para a API do PNCP."""
-
 from typing import Literal
 
 from curl_cffi import requests
 
 from .models import (
-    DocumentoLicitacao,
-    EventoHistorico,
-    ItemBusca,
-    ItemLicitacao,
-    RespostaBusca,
-    ResultadoItem,
+    SearchResponse,
+    TenderDocument,
+    TenderHistoryEvent,
+    TenderItem,
+    TenderItemResult,
 )
 
-URL_BUSCA  = "https://pncp.gov.br/api/search/"
+SEARCH_URL = "https://pncp.gov.br/api/search/"
 PNCP_BASE  = "https://pncp.gov.br/api/pncp/v1"
 
-_sessao = requests.Session(impersonate="chrome")
-
-# ---------------------------------------------------------------------------
-# Tipos dos parâmetros
-# ---------------------------------------------------------------------------
+_session = requests.Session(impersonate="chrome")
 
 TipoDocumento = Literal["edital", "ata", "contrato"]
 Ordenacao     = Literal["-data", "data", "relevancia"]
@@ -36,29 +29,19 @@ UF            = Literal[
     "RS", "RO", "RR", "SC", "SP", "SE", "TO",
 ]
 Modalidade    = Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
-# 1=Leilão Eletrônico, 2=Diálogo Competitivo, 3=Concurso,
-# 4=Concorrência Eletrônica, 5=Concorrência Presencial,
-# 6=Pregão Eletrônico, 7=Pregão Presencial, 8=Dispensa de Licitação,
-# 9=Inexigibilidade, 10=Manifestação de Interesse,
-# 11=Pré-Qualificação, 12=Credenciamento, 13=Leilão Presencial
 
-# ---------------------------------------------------------------------------
-# Auxiliares
-# ---------------------------------------------------------------------------
 
 def _get(url: str, params: dict | None = None) -> requests.Response:
-    resp = _sessao.get(url, params=params, timeout=30)
+    resp = _session.get(url, params=params, timeout=30)
     resp.raise_for_status()
     return resp
 
-def _base_licitacao(cnpj_orgao: str, ano: int, sequencial: int) -> str:
-    return f"{PNCP_BASE}/orgaos/{cnpj_orgao}/compras/{ano}/{sequencial}"
 
-# ---------------------------------------------------------------------------
-# Busca
-# ---------------------------------------------------------------------------
+def _tender_base(orgao_cnpj: str, ano: int, sequencial: int) -> str:
+    return f"{PNCP_BASE}/orgaos/{orgao_cnpj}/compras/{ano}/{sequencial}"
 
-def buscar(
+
+def search(
     q: str,
     tipos_documento: TipoDocumento = "edital",
     ordenacao: Ordenacao = "-data",
@@ -76,7 +59,7 @@ def buscar(
     tipos_margens_preferencia: str | None = None,
     exigencia_conteudo_nacional: bool | None = None,
     possui_emenda_parlamentar: bool | None = None,
-) -> RespostaBusca:
+) -> SearchResponse:
     params = {k: v for k, v in {
         "q": q,
         "tipos_documento": tipos_documento,
@@ -103,79 +86,48 @@ def buscar(
         ),
     }.items() if v is not None}
 
-    data = _get(URL_BUSCA, params).json()
+    data = _get(SEARCH_URL, params).json()
     total = data.get("total", 0)
 
-    return RespostaBusca(
+    return SearchResponse(
         items=data.get("items", []),
         total=total,
         total_paginas=-(-total // tam_pagina),
         pagina=pagina,
     )
 
-# ---------------------------------------------------------------------------
-# Detalhes da licitação (requer captcha — mockado)
-# ---------------------------------------------------------------------------
 
-def obter_licitacao(cnpj_orgao: str, ano: int, sequencial: int, captcha: str = "") -> dict:
+def get_tender(orgao_cnpj: str, ano: int, sequencial: int, captcha: str = "") -> dict:
     if not captcha:
-        return {
-            "mockado": True,
-            "cnpj_orgao": cnpj_orgao,
-            "ano": ano,
-            "sequencial": sequencial,
-            "observacao": "token captcha necessário para chamar o endpoint portal",
-        }
-    url = f"{_base_licitacao(cnpj_orgao, ano, sequencial)}/portal"
-    return _get(url, {"captcha": captcha}).json()
+        return {"mocked": True, "orgao_cnpj": orgao_cnpj, "ano": ano, "sequencial": sequencial}
+    return _get(f"{_tender_base(orgao_cnpj, ano, sequencial)}/portal", {"captcha": captcha}).json()
 
-# ---------------------------------------------------------------------------
-# Itens
-# ---------------------------------------------------------------------------
 
-def obter_itens(
-    cnpj_orgao: str,
-    ano: int,
-    sequencial: int,
-    pagina: int = 1,
-    tamanho_pagina: int = 50,
-) -> list[ItemLicitacao]:
-    url = f"{_base_licitacao(cnpj_orgao, ano, sequencial)}/itens"
-    return _get(url, {"pagina": pagina, "tamanhoPagina": tamanho_pagina}).json()
+def get_tender_items(
+    orgao_cnpj: str, ano: int, sequencial: int,
+    pagina: int = 1, tamanho_pagina: int = 50,
+) -> list[TenderItem]:
+    return _get(f"{_tender_base(orgao_cnpj, ano, sequencial)}/itens",
+                {"pagina": pagina, "tamanhoPagina": tamanho_pagina}).json()
 
-def obter_resultado_item(
-    cnpj_orgao: str,
-    ano: int,
-    sequencial: int,
-    numero_item: int,
-) -> list[ResultadoItem]:
-    url = f"{_base_licitacao(cnpj_orgao, ano, sequencial)}/itens/{numero_item}/resultados"
-    return _get(url).json()
 
-# ---------------------------------------------------------------------------
-# Documentos
-# ---------------------------------------------------------------------------
+def get_tender_item_results(
+    orgao_cnpj: str, ano: int, sequencial: int, numero_item: int,
+) -> list[TenderItemResult]:
+    return _get(f"{_tender_base(orgao_cnpj, ano, sequencial)}/itens/{numero_item}/resultados").json()
 
-def obter_documentos(
-    cnpj_orgao: str,
-    ano: int,
-    sequencial: int,
-    pagina: int = 1,
-    tamanho_pagina: int = 50,
-) -> list[DocumentoLicitacao]:
-    url = f"{_base_licitacao(cnpj_orgao, ano, sequencial)}/arquivos"
-    return _get(url, {"pagina": pagina, "tamanhoPagina": tamanho_pagina}).json()
 
-# ---------------------------------------------------------------------------
-# Histórico
-# ---------------------------------------------------------------------------
+def get_tender_documents(
+    orgao_cnpj: str, ano: int, sequencial: int,
+    pagina: int = 1, tamanho_pagina: int = 50,
+) -> list[TenderDocument]:
+    return _get(f"{_tender_base(orgao_cnpj, ano, sequencial)}/arquivos",
+                {"pagina": pagina, "tamanhoPagina": tamanho_pagina}).json()
 
-def obter_historico(
-    cnpj_orgao: str,
-    ano: int,
-    sequencial: int,
-    pagina: int = 1,
-    tamanho_pagina: int = 50,
-) -> list[EventoHistorico]:
-    url = f"{_base_licitacao(cnpj_orgao, ano, sequencial)}/historico"
-    return _get(url, {"pagina": pagina, "tamanhoPagina": tamanho_pagina}).json()
+
+def get_tender_history(
+    orgao_cnpj: str, ano: int, sequencial: int,
+    pagina: int = 1, tamanho_pagina: int = 50,
+) -> list[TenderHistoryEvent]:
+    return _get(f"{_tender_base(orgao_cnpj, ano, sequencial)}/historico",
+                {"pagina": pagina, "tamanhoPagina": tamanho_pagina}).json()

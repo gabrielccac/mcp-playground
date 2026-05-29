@@ -4,12 +4,12 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from api import buscar
+from api import search
 
-pagina = buscar(q="toner", tam_pagina=10)
+page = search(q="toner", tam_pagina=10)
 
-print(f"total: {pagina['total']}  páginas: {pagina['total_paginas']}")
+print(f"total: {page['total']}  páginas: {page['total_paginas']}")
 print()
-for item in pagina["items"]:
+for item in page["items"]:
     print(f"[{item.get('uf')}] {item.get('title', '')[:80]}")
     print(f"       {item.get('orgao_nome')} | {item.get('situacao_nome')}")

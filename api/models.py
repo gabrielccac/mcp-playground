@@ -1,13 +1,7 @@
-"""Tipos de resposta da API do PNCP."""
-
 from typing import TypedDict
 
 
-# ---------------------------------------------------------------------------
-# Busca
-# ---------------------------------------------------------------------------
-
-class ItemBusca(TypedDict, total=False):
+class SearchItem(TypedDict, total=False):
     id: str
     title: str
     description: str
@@ -16,17 +10,11 @@ class ItemBusca(TypedDict, total=False):
     numero_controle_pncp: str | None
     numero_sequencial: str | None
     ano: str | None
-
-    # Órgão
     orgao_cnpj: str | None
     orgao_nome: str | None
     unidade_nome: str | None
-
-    # Localização
     uf: str | None
     municipio_nome: str | None
-
-    # Classificação
     esfera_id: str | None
     esfera_nome: str | None
     poder_id: str | None
@@ -36,31 +24,23 @@ class ItemBusca(TypedDict, total=False):
     situacao_id: str | None
     situacao_nome: str | None
     tipo_nome: str | None
-
-    # Datas
     data_publicacao_pncp: str | None
     data_inicio_vigencia: str | None
     data_fim_vigencia: str | None
-
-    # Valor e flags
     valor_global: float | None
     cancelado: bool | None
     tem_resultado: bool | None
     exigencia_conteudo_nacional: bool | None
 
 
-class RespostaBusca(TypedDict):
-    items: list[ItemBusca]
+class SearchResponse(TypedDict):
+    items: list[SearchItem]
     total: int
     total_paginas: int
     pagina: int
 
 
-# ---------------------------------------------------------------------------
-# Sub-recursos da licitação (camelCase — espelha a resposta da API)
-# ---------------------------------------------------------------------------
-
-class ItemLicitacao(TypedDict, total=False):
+class TenderItem(TypedDict, total=False):
     numeroItem: int
     descricao: str
     materialOuServico: str
@@ -79,7 +59,7 @@ class ItemLicitacao(TypedDict, total=False):
     orcamentoSigiloso: bool
 
 
-class ResultadoItem(TypedDict, total=False):
+class TenderItemResult(TypedDict, total=False):
     niFornecedor: str
     nomeRazaoSocialFornecedor: str
     tipoPessoa: str
@@ -106,7 +86,7 @@ class ResultadoItem(TypedDict, total=False):
     aplicacaoBeneficioMeEpp: bool
 
 
-class DocumentoLicitacao(TypedDict, total=False):
+class TenderDocument(TypedDict, total=False):
     uri: str
     url: str
     cnpj: str
@@ -121,7 +101,7 @@ class DocumentoLicitacao(TypedDict, total=False):
     sequencialDocumento: int
 
 
-class EventoHistorico(TypedDict, total=False):
+class TenderHistoryEvent(TypedDict, total=False):
     justificativa: str | None
     tipoLogManutencao: int
     tipoLogManutencaoNome: str | None
