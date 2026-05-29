@@ -13,7 +13,7 @@ from mcp import ClientSession
 from mcp.client.streamable_http import streamablehttp_client
 
 AIRTABLE_MCP_URL = "https://mcp.airtable.com/mcp"
-MODEL = "gpt-4o"
+MODEL = "gpt-4.5-nano"
 MAX_TURNS = 20
 
 SYSTEM = (
