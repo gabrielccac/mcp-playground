@@ -1,5 +1,9 @@
 """Filter combinations — run from repo root: python examples/search_filters.py"""
 
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 from api import search
 
 cases = [
