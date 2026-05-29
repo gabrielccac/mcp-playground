@@ -144,10 +144,9 @@ class PNCPClient:
         response.raise_for_status()
         data = response.json()
 
-        items = [SearchResult.model_validate(item) for item in data.get("items", [])]
-        return SearchPage[SearchResult](
-            items=items,
-            totalRegistros=data.get("totalRegistros", 0),
-            totalPaginas=data.get("totalPaginas", 0),
-            numeroPagina=data.get("numeroPagina", pagina),
+        return SearchPage(
+            items=data.get("items", []),
+            total_registros=data.get("totalRegistros", 0),
+            total_paginas=data.get("totalPaginas", 0),
+            pagina=data.get("numeroPagina", pagina),
         )

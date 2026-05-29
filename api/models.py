@@ -1,85 +1,50 @@
-"""Pydantic response models for the PNCP search API."""
+"""Response types for the PNCP search API."""
 
-from datetime import datetime
-from typing import Generic, TypeVar
-
-from pydantic import BaseModel, Field
-
-T = TypeVar("T")
+from typing import TypedDict
 
 
-class SearchResult(BaseModel):
-    id: str = ""
-    title: str = ""
-    description: str = ""
-    document_type: str = ""
-    item_url: str = ""
-
-    # Identifiers
-    ano: str = ""
-    numero_sequencial: str = Field(default="", alias="numero_sequencial")
-    numero_controle_pncp: str | None = Field(default=None, alias="numeroControlePNCP")
+class SearchResult(TypedDict, total=False):
+    id: str
+    title: str
+    description: str
+    document_type: str
+    item_url: str
+    numero_controle_pncp: str | None
 
     # Org
-    orgao_cnpj: str | None = Field(default=None, alias="orgaoCnpj")
-    orgao_nome: str | None = Field(default=None, alias="orgaoNome")
-    unidade_nome: str | None = Field(default=None, alias="unidadeNome")
-
-    # Sphere / Branch
-    esfera_nome: str | None = Field(default=None, alias="esferaNome")
-    poder_nome: str | None = Field(default=None, alias="poderNome")
+    orgao_cnpj: str | None
+    orgao_nome: str | None
+    unidade_nome: str | None
 
     # Location
-    uf: str | None = None
-    municipio_nome: str | None = Field(default=None, alias="municipioNome")
+    uf: str | None
+    municipio_nome: str | None
 
-    # Modality
-    modalidade_licitacao_nome: str | None = Field(
-        default=None, alias="modalidadeLicitacaoNome"
-    )
+    # Classification
+    esfera_id: str | None
+    esfera_nome: str | None
+    poder_id: str | None
+    poder_nome: str | None
+    modalidade_licitacao_id: str | None
+    modalidade_licitacao_nome: str | None
+    situacao_id: str | None
+    situacao_nome: str | None
+    tipo_nome: str | None
 
-    # Status
-    situacao_nome: str | None = Field(default=None, alias="situacaoNome")
+    # Dates (strings as returned by the API)
+    data_publicacao_pncp: str | None
+    data_inicio_vigencia: str | None
+    data_fim_vigencia: str | None
 
-    # Dates
-    data_publicacao_pncp: datetime | None = Field(
-        default=None, alias="dataPublicacaoPncp"
-    )
-    data_assinatura: datetime | None = Field(default=None, alias="dataAssinatura")
-    data_inicio_vigencia: datetime | None = Field(
-        default=None, alias="dataInicioVigencia"
-    )
-    data_fim_vigencia: datetime | None = Field(default=None, alias="dataFimVigencia")
-
-    # Value
-    valor_global: float | None = Field(default=None, alias="valorGlobal")
-
-    # Flags
-    cancelado: bool | None = None
-    tem_resultado: bool | None = Field(default=None, alias="temResultado")
-    exigencia_conteudo_nacional: bool | None = Field(
-        default=None, alias="exigenciaConteudoNacional"
-    )
-
-    # Type labels
-    tipo_nome: str | None = Field(default=None, alias="tipoNome")
-
-    model_config = {"populate_by_name": True, "extra": "ignore"}
-
-    def __repr__(self) -> str:
-        return f"SearchResult(title={self.title!r}, orgao={self.orgao_nome})"
+    # Value / flags
+    valor_global: float | None
+    cancelado: bool | None
+    tem_resultado: bool | None
+    exigencia_conteudo_nacional: bool | None
 
 
-class SearchPage(BaseModel, Generic[T]):
-    """Paginated wrapper returned by /api/search/."""
-
-    items: list[T] = []
-    total_registros: int = Field(default=0, alias="totalRegistros")
-    total_paginas: int = Field(default=0, alias="totalPaginas")
-    pagina: int = Field(default=1, alias="numeroPagina")
-
-    model_config = {"populate_by_name": True, "extra": "ignore"}
-
-    @property
-    def has_more(self) -> bool:
-        return self.pagina < self.total_paginas
+class SearchPage(TypedDict):
+    items: list[SearchResult]
+    total_registros: int
+    total_paginas: int
+    pagina: int
