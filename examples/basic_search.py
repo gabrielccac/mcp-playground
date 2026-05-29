@@ -1,4 +1,4 @@
-"""Busca básica — execute: python examples/busca_basica.py"""
+"""Basic search — run: python examples/basic_search.py"""
 
 import sys
 from pathlib import Path
@@ -8,7 +8,7 @@ from api import search
 
 page = search(q="toner", tam_pagina=10)
 
-print(f"total: {page['total']}  páginas: {page['total_paginas']}")
+print(f"total: {page['total']}  pages: {page['total_paginas']}")
 print()
 for item in page["items"]:
     print(f"[{item.get('uf')}] {item.get('title', '')[:80]}")
