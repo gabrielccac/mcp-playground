@@ -29,17 +29,16 @@ async def main():
             for t in tools.tools:
                 print(f"  {t.name}")
 
-            print("\n=== list_bases (raw) ===")
-            result = await session.call_tool("list_bases", {})
-            print(f"content items: {len(result.content)}")
-            print(f"is_error: {result.isError}")
-            for item in result.content:
-                print(f"  type={item.type!r}  text={getattr(item, 'text', None)!r}")
+            print("\n=== ping ===")
+            r = await session.call_tool("ping", {})
+            print(repr(r))
 
-            print("\n=== list_workspaces (raw) ===")
-            result2 = await session.call_tool("list_workspaces", {})
-            print(f"content items: {len(result2.content)}")
-            for item in result2.content:
-                print(f"  type={item.type!r}  text={getattr(item, 'text', None)!r}")
+            print("\n=== list_bases (full repr) ===")
+            r = await session.call_tool("list_bases", {})
+            print(repr(r))
+
+            print("\n=== list_workspaces (full repr) ===")
+            r = await session.call_tool("list_workspaces", {})
+            print(repr(r))
 
 asyncio.run(main())
