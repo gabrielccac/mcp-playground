@@ -9,10 +9,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from agents import Agent, Runner
-from agents.mcp import MCPServerStdio
+from agents.mcp import MCPServerSse, MCPServerStdio
 from openai import RateLimitError
 
 SERVER_SCRIPT = str(Path(__file__).parent.parent / "tender-mcp" / "server.py")
+AIRTABLE_MCP_URL = "https://mcp.airtable.com/mcp"
 
 MAX_TURNS = 20
 MAX_RETRIES = 4
@@ -49,11 +50,11 @@ def _make_pncp_server():
 
 
 def _make_airtable_server():
-    return MCPServerStdio(
+    token = os.environ.get("AIRTABLE_TOKEN", "")
+    return MCPServerSse(
         params={
-            "command": "npx",
-            "args": ["-y", "@airtable/mcp-server"],
-            "env": {**os.environ, "AIRTABLE_API_KEY": os.environ.get("AIRTABLE_API_KEY", "")},
+            "url": AIRTABLE_MCP_URL,
+            "headers": {"Authorization": f"Bearer {token}"},
         },
         cache_tools_list=True,
     )
