@@ -2,14 +2,13 @@
 
 from typing import Literal
 
-import requests
+from curl_cffi import requests
 
 from .models import SearchPage
 
 SEARCH_URL = "https://pncp.gov.br/api/search/"
 
-_session = requests.Session()
-_session.headers.update({"User-Agent": "Mozilla/5.0 (compatible; pncp-client/1.0)"})
+_session = requests.Session(impersonate="chrome")
 
 # ---------------------------------------------------------------------------
 # Param types
