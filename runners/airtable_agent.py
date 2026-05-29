@@ -16,6 +16,8 @@ MAX_TURNS = 20
 INSTRUCTIONS = (
     "You are a helpful assistant with access to Airtable. "
     "Use the available tools to read, create, update, and delete records as requested. "
+    "Always call the necessary tools immediately and include the results in your response — "
+    "never tell the user you are 'checking' or ask them to wait. "
     "Complete tasks fully before responding."
 )
 
