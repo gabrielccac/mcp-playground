@@ -108,3 +108,30 @@ class TenderHistoryEvent(TypedDict, total=False):
     documentoTipo: str | None
     documentoTitulo: str | None
     documentoSequencial: int | None
+
+
+class TenderItemResult(TypedDict, total=False):
+    niFornecedor: str
+    nomeRazaoSocialFornecedor: str
+    tipoPessoa: str
+    porteFornecedorId: int | None
+    porteFornecedorNome: str | None
+    numeroItem: int
+    sequencialResultado: int
+    valorUnitarioHomologado: float | None
+    valorTotalHomologado: float | None
+    quantidadeHomologada: float | None
+    percentualDesconto: float | None
+    ordemClassificacaoSrp: int | None
+    dataResultado: str | None
+    dataInclusao: str | None
+    dataAtualizacao: str | None
+    dataCancelamento: str | None
+    situacaoCompraItemResultadoId: int | None
+    situacaoCompraItemResultadoNome: str | None
+    numeroControlePNCPCompra: str | None
+    codigoPais: str | None
+    naturezaJuridicaId: str | None
+    naturezaJuridicaNome: str | None
+    indicadorSubcontratacao: bool
+    aplicacaoBeneficioMeEpp: bool

@@ -10,6 +10,7 @@ from .models import (
     TenderDocument,
     TenderHistoryEvent,
     TenderItem,
+    TenderItemResult,
 )
 
 SEARCH_URL = "https://pncp.gov.br/api/search/"
@@ -145,37 +146,37 @@ def get_tender(orgao_cnpj: str, ano: int, sequencial: int, captcha: str = "") ->
 # Tender items
 # ---------------------------------------------------------------------------
 
-def get_tender_items_count(orgao_cnpj: str, ano: int, sequencial: int) -> int:
-    """Total number of items in a tender."""
-    url = f"{_tender_base(orgao_cnpj, ano, sequencial)}/itens/quantidade"
-    return _get(url).json()
-
 def get_tender_items(
     orgao_cnpj: str,
     ano: int,
     sequencial: int,
     pagina: int = 1,
-    tamanho_pagina: int = 20,
+    tamanho_pagina: int = 50,
 ) -> list[TenderItem]:
     """Items (products/services) being procured in a tender."""
     url = f"{_tender_base(orgao_cnpj, ano, sequencial)}/itens"
     return _get(url, {"pagina": pagina, "tamanhoPagina": tamanho_pagina}).json()
 
+def get_tender_item_results(
+    orgao_cnpj: str,
+    ano: int,
+    sequencial: int,
+    numero_item: int,
+) -> list[TenderItemResult]:
+    """Winner/result for a specific item in a closed tender."""
+    url = f"{_tender_base(orgao_cnpj, ano, sequencial)}/itens/{numero_item}/resultados"
+    return _get(url).json()
+
 # ---------------------------------------------------------------------------
 # Tender documents
 # ---------------------------------------------------------------------------
-
-def get_tender_documents_count(orgao_cnpj: str, ano: int, sequencial: int) -> int:
-    """Total number of attached documents in a tender."""
-    url = f"{_tender_base(orgao_cnpj, ano, sequencial)}/arquivos/quantidade"
-    return _get(url).json()
 
 def get_tender_documents(
     orgao_cnpj: str,
     ano: int,
     sequencial: int,
     pagina: int = 1,
-    tamanho_pagina: int = 20,
+    tamanho_pagina: int = 50,
 ) -> list[TenderDocument]:
     """Attached documents (edital, annexes, etc.) for a tender."""
     url = f"{_tender_base(orgao_cnpj, ano, sequencial)}/arquivos"
@@ -185,17 +186,12 @@ def get_tender_documents(
 # Tender history
 # ---------------------------------------------------------------------------
 
-def get_tender_history_count(orgao_cnpj: str, ano: int, sequencial: int) -> int:
-    """Total number of history events for a tender."""
-    url = f"{_tender_base(orgao_cnpj, ano, sequencial)}/historico/quantidade"
-    return _get(url).json()
-
 def get_tender_history(
     orgao_cnpj: str,
     ano: int,
     sequencial: int,
     pagina: int = 1,
-    tamanho_pagina: int = 20,
+    tamanho_pagina: int = 50,
 ) -> list[TenderHistoryEvent]:
     """Audit log / history of changes for a tender."""
     url = f"{_tender_base(orgao_cnpj, ano, sequencial)}/historico"
