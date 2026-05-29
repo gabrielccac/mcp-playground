@@ -8,13 +8,13 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from dotenv import load_dotenv
 load_dotenv()
 
-import anthropic
+from openai import OpenAI
 from mcp import ClientSession
 from mcp.client.streamable_http import streamablehttp_client
 
 AIRTABLE_MCP_URL = "https://mcp.airtable.com/mcp"
-MODEL = "claude-opus-4-8"
-MAX_TOKENS = 4096
+MODEL = "gpt-4o"
+MAX_TURNS = 20
 
 SYSTEM = (
     "You are a helpful assistant with access to Airtable. "
@@ -23,7 +23,7 @@ SYSTEM = (
     "Complete tasks fully before responding."
 )
 
-client = anthropic.Anthropic()
+client = OpenAI()
 
 
 def _headers():
@@ -36,11 +36,11 @@ async def _list_tools() -> list[dict]:
             await session.initialize()
             result = await session.list_tools()
     return [
-        {
+        {"type": "function", "function": {
             "name": t.name,
             "description": t.description or "",
-            "input_schema": t.inputSchema,
-        }
+            "parameters": t.inputSchema,
+        }}
         for t in result.tools
     ]
 
@@ -55,41 +55,37 @@ async def _call_tool(name: str, args: dict) -> str:
 
 
 async def _run(messages: list, tools: list) -> tuple[str, list]:
-    """One agentic loop — keeps calling tools until the model stops."""
-    while True:
-        response = client.messages.create(
+    for _ in range(MAX_TURNS):
+        response = client.chat.completions.create(
             model=MODEL,
-            max_tokens=MAX_TOKENS,
-            system=SYSTEM,
-            tools=tools,
             messages=messages,
+            tools=tools,
         )
-        messages.append({"role": "assistant", "content": response.content})
+        msg = response.choices[0].message
+        messages.append(msg)
 
-        if response.stop_reason != "tool_use":
-            text = next((b.text for b in response.content if hasattr(b, "text")), "")
-            return text, messages
+        if not msg.tool_calls:
+            return msg.content or "", messages
 
-        # Execute all tool calls in this turn
-        tool_results = []
-        for block in response.content:
-            if block.type == "tool_use":
-                print(f"  → {block.name}({json.dumps(block.input)})")
-                output = await _call_tool(block.name, block.input)
-                print(f"  ← {output[:200]}")
-                tool_results.append({
-                    "type": "tool_result",
-                    "tool_use_id": block.id,
-                    "content": output,
-                })
-        messages.append({"role": "user", "content": tool_results})
+        for tc in msg.tool_calls:
+            args = json.loads(tc.function.arguments)
+            print(f"  → {tc.function.name}({json.dumps(args)})")
+            output = await _call_tool(tc.function.name, args)
+            print(f"  ← {output[:200]}")
+            messages.append({
+                "role": "tool",
+                "tool_call_id": tc.id,
+                "content": output,
+            })
+
+    return "Max turns reached.", messages
 
 
 async def _session():
     print("Airtable Agent — type 'exit' to quit.\n")
     tools = await _list_tools()
     print(f"Loaded {len(tools)} tools.\n")
-    messages = []
+    messages = [{"role": "system", "content": SYSTEM}]
     while True:
         try:
             user_input = input("You: ").strip()
