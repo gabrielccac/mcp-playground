@@ -10,7 +10,7 @@ from agents import Agent, Runner
 from agents.mcp import MCPServerStdio
 from openai import RateLimitError
 
-SERVER_SCRIPT = str(Path(__file__).parent.parent / "server" / "server.py")
+SERVER_SCRIPT = str(Path(__file__).parent.parent / "tender-mcp" / "server.py")
 
 MAX_TURNS = 20
 MAX_RETRIES = 4

@@ -2,7 +2,7 @@
 MCP server exposing PNCP tools via FastMCP.
 
 Run directly:
-    python server/server.py
+    python tender-mcp/server.py
 
 Or launched automatically via stdio by runners/mcp_agent.py.
 """
