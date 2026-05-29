@@ -22,8 +22,11 @@ agent = Agent(
 )
 
 
+MAX_TURNS = 20
+
+
 def run(prompt: str) -> str:
-    result = Runner.run_sync(agent, prompt)
+    result = Runner.run_sync(agent, prompt, max_turns=MAX_TURNS)
     return result.final_output
 
 
@@ -41,7 +44,7 @@ def session():
         if not user_input:
             continue
         messages.append({"role": "user", "content": user_input})
-        result = Runner.run_sync(agent, input=messages)
+        result = Runner.run_sync(agent, input=messages, max_turns=MAX_TURNS)
         messages = result.to_input_list()
         print(f"\nAgente: {result.final_output}\n")
 
