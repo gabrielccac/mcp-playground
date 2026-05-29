@@ -50,6 +50,8 @@ async def _call_tool(name: str, args: dict) -> str:
         async with ClientSession(r, w) as session:
             await session.initialize()
             result = await session.call_tool(name, args)
+    if result.structuredContent is not None:
+        return json.dumps(result.structuredContent, ensure_ascii=False)
     parts = [c.text if hasattr(c, "text") else str(c) for c in result.content]
     return "\n".join(parts) or "[]"
 
