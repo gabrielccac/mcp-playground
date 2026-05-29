@@ -1,30 +1,32 @@
-"""Response types for the PNCP API."""
+"""Tipos de resposta da API do PNCP."""
 
 from typing import TypedDict
 
 
 # ---------------------------------------------------------------------------
-# Search endpoint types
+# Busca
 # ---------------------------------------------------------------------------
 
-class SearchItem(TypedDict, total=False):
+class ItemBusca(TypedDict, total=False):
     id: str
     title: str
     description: str
     document_type: str
     item_url: str
     numero_controle_pncp: str | None
+    numero_sequencial: str | None
+    ano: str | None
 
-    # Org
+    # Órgão
     orgao_cnpj: str | None
     orgao_nome: str | None
     unidade_nome: str | None
 
-    # Location
+    # Localização
     uf: str | None
     municipio_nome: str | None
 
-    # Classification
+    # Classificação
     esfera_id: str | None
     esfera_nome: str | None
     poder_id: str | None
@@ -35,32 +37,30 @@ class SearchItem(TypedDict, total=False):
     situacao_nome: str | None
     tipo_nome: str | None
 
-    # Dates (strings as returned by the API)
+    # Datas
     data_publicacao_pncp: str | None
     data_inicio_vigencia: str | None
     data_fim_vigencia: str | None
 
-    # Value / flags
+    # Valor e flags
     valor_global: float | None
     cancelado: bool | None
     tem_resultado: bool | None
     exigencia_conteudo_nacional: bool | None
-    numero_sequencial: str | None
-    ano: str | None
 
 
-class SearchResponse(TypedDict):
-    items: list[SearchItem]
+class RespostaBusca(TypedDict):
+    items: list[ItemBusca]
     total: int
     total_paginas: int
     pagina: int
 
 
 # ---------------------------------------------------------------------------
-# Tender sub-resource types (camelCase — matches API response directly)
+# Sub-recursos da licitação (camelCase — espelha a resposta da API)
 # ---------------------------------------------------------------------------
 
-class TenderItem(TypedDict, total=False):
+class ItemLicitacao(TypedDict, total=False):
     numeroItem: int
     descricao: str
     materialOuServico: str
@@ -79,38 +79,7 @@ class TenderItem(TypedDict, total=False):
     orcamentoSigiloso: bool
 
 
-class TenderDocument(TypedDict, total=False):
-    uri: str
-    url: str
-    cnpj: str
-    tipoDocumentoId: int | None
-    tipoDocumentoDescricao: str | None
-    tipoDocumentoNome: str | None
-    statusAtivo: bool
-    anoCompra: int
-    sequencialCompra: int
-    dataPublicacaoPncp: str | None
-    titulo: str | None
-    sequencialDocumento: int
-
-
-class TenderHistoryEvent(TypedDict, total=False):
-    justificativa: str | None
-    tipoLogManutencao: int
-    tipoLogManutencaoNome: str | None
-    categoriaLogManutencao: int
-    categoriaLogManutencaoNome: str | None
-    logManutencaoDataInclusao: str | None
-    usuarioNome: str | None
-    compraOrgaoCnpj: str | None
-    compraAno: int | None
-    compraSequencial: int | None
-    documentoTipo: str | None
-    documentoTitulo: str | None
-    documentoSequencial: int | None
-
-
-class TenderItemResult(TypedDict, total=False):
+class ResultadoItem(TypedDict, total=False):
     niFornecedor: str
     nomeRazaoSocialFornecedor: str
     tipoPessoa: str
@@ -135,3 +104,34 @@ class TenderItemResult(TypedDict, total=False):
     naturezaJuridicaNome: str | None
     indicadorSubcontratacao: bool
     aplicacaoBeneficioMeEpp: bool
+
+
+class DocumentoLicitacao(TypedDict, total=False):
+    uri: str
+    url: str
+    cnpj: str
+    tipoDocumentoId: int | None
+    tipoDocumentoDescricao: str | None
+    tipoDocumentoNome: str | None
+    statusAtivo: bool
+    anoCompra: int
+    sequencialCompra: int
+    dataPublicacaoPncp: str | None
+    titulo: str | None
+    sequencialDocumento: int
+
+
+class EventoHistorico(TypedDict, total=False):
+    justificativa: str | None
+    tipoLogManutencao: int
+    tipoLogManutencaoNome: str | None
+    categoriaLogManutencao: int
+    categoriaLogManutencaoNome: str | None
+    logManutencaoDataInclusao: str | None
+    usuarioNome: str | None
+    compraOrgaoCnpj: str | None
+    compraAno: int | None
+    compraSequencial: int | None
+    documentoTipo: str | None
+    documentoTitulo: str | None
+    documentoSequencial: int | None
