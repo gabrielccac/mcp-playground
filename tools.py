@@ -137,8 +137,31 @@ def obter_historico_licitacao(
     return json.dumps(get_tender_history(cnpj_orgao, ano, sequencial), ensure_ascii=False)
 
 
+def extrair_dados_url_pncp(url: str) -> str:
+    """
+    Extrai cnpj_orgao, ano e sequencial de uma URL do PNCP.
+
+    Aceita URLs nos formatos:
+      https://pncp.gov.br/app/editais/{cnpj}/{ano}/{sequencial}
+      https://pncp.gov.br/app/contrato/{cnpj}/{ano}/{sequencial}
+
+    Use esta ferramenta sempre que o usuário fornecer um link do PNCP
+    e você precisar dos parâmetros para chamar outras ferramentas.
+
+    Args:
+        url: URL completa ou parcial de uma licitação no PNCP
+    """
+    import re
+    match = re.search(r"/(?:editais|contrato|atas)/(\d+)/(\d{4})/(\d+)", url)
+    if not match:
+        return json.dumps({"erro": "URL não reconhecida. Formato esperado: pncp.gov.br/app/editais/{cnpj}/{ano}/{sequencial}"})
+    cnpj, ano, sequencial = match.groups()
+    return json.dumps({"cnpj_orgao": cnpj, "ano": int(ano), "sequencial": int(sequencial)})
+
+
 FERRAMENTAS = [
     buscar_licitacoes,
+    extrair_dados_url_pncp,
     obter_itens_licitacao,
     obter_resultado_item_licitacao,
     obter_documentos_licitacao,
