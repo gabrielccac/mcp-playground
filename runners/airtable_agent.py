@@ -8,55 +8,87 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from dotenv import load_dotenv
 load_dotenv()
 
-from agents import Agent, Runner, function_tool
+import anthropic
 from mcp import ClientSession
 from mcp.client.streamable_http import streamablehttp_client
 
 AIRTABLE_MCP_URL = "https://mcp.airtable.com/mcp"
-MAX_TURNS = 20
+MODEL = "claude-opus-4-8"
+MAX_TOKENS = 4096
 
-INSTRUCTIONS = (
+SYSTEM = (
     "You are a helpful assistant with access to Airtable. "
-    "Use the available tools to read, create, update, and delete records as requested. "
     "Always call the necessary tools immediately and include the results in your response — "
     "never tell the user you are 'checking' or ask them to wait. "
     "Complete tasks fully before responding."
 )
 
+client = anthropic.Anthropic()
 
-def _mcp_headers():
+
+def _headers():
     return {"Authorization": f"Bearer {os.environ.get('AIRTABLE_TOKEN', '')}"}
 
 
-def _make_tool(name: str, description: str):
-    """Wrap a single MCP tool as a function_tool the agents SDK can call."""
-    async def _call(**kwargs) -> str:
-        async with streamablehttp_client(url=AIRTABLE_MCP_URL, headers=_mcp_headers()) as (r, w, _):
-            async with ClientSession(r, w) as session:
-                await session.initialize()
-                result = await session.call_tool(name, kwargs)
-                parts = [c.text if hasattr(c, "text") else str(c) for c in result.content]
-                return "\n".join(parts) or "[]"
-
-    _call.__name__ = name
-    _call.__doc__ = description
-    return function_tool(_call)
-
-
-async def _build_tools() -> list:
-    """Connect once to fetch the tool list, then build function_tool wrappers."""
-    async with streamablehttp_client(url=AIRTABLE_MCP_URL, headers=_mcp_headers()) as (r, w, _):
+async def _list_tools() -> list[dict]:
+    async with streamablehttp_client(url=AIRTABLE_MCP_URL, headers=_headers()) as (r, w, _):
         async with ClientSession(r, w) as session:
             await session.initialize()
-            tools = await session.list_tools()
-    return [_make_tool(t.name, t.description or "") for t in tools.tools]
+            result = await session.list_tools()
+    return [
+        {
+            "name": t.name,
+            "description": t.description or "",
+            "input_schema": t.inputSchema,
+        }
+        for t in result.tools
+    ]
+
+
+async def _call_tool(name: str, args: dict) -> str:
+    async with streamablehttp_client(url=AIRTABLE_MCP_URL, headers=_headers()) as (r, w, _):
+        async with ClientSession(r, w) as session:
+            await session.initialize()
+            result = await session.call_tool(name, args)
+    parts = [c.text if hasattr(c, "text") else str(c) for c in result.content]
+    return "\n".join(parts) or "[]"
+
+
+async def _run(messages: list, tools: list) -> tuple[str, list]:
+    """One agentic loop — keeps calling tools until the model stops."""
+    while True:
+        response = client.messages.create(
+            model=MODEL,
+            max_tokens=MAX_TOKENS,
+            system=SYSTEM,
+            tools=tools,
+            messages=messages,
+        )
+        messages.append({"role": "assistant", "content": response.content})
+
+        if response.stop_reason != "tool_use":
+            text = next((b.text for b in response.content if hasattr(b, "text")), "")
+            return text, messages
+
+        # Execute all tool calls in this turn
+        tool_results = []
+        for block in response.content:
+            if block.type == "tool_use":
+                print(f"  → {block.name}({json.dumps(block.input)})")
+                output = await _call_tool(block.name, block.input)
+                print(f"  ← {output[:200]}")
+                tool_results.append({
+                    "type": "tool_result",
+                    "tool_use_id": block.id,
+                    "content": output,
+                })
+        messages.append({"role": "user", "content": tool_results})
 
 
 async def _session():
     print("Airtable Agent — type 'exit' to quit.\n")
-    tools = await _build_tools()
-    print(f"Loaded {len(tools)} tools from Airtable MCP.\n")
-    agent = Agent(name="Airtable Agent", instructions=INSTRUCTIONS, tools=tools)
+    tools = await _list_tools()
+    print(f"Loaded {len(tools)} tools.\n")
     messages = []
     while True:
         try:
@@ -68,9 +100,8 @@ async def _session():
         if not user_input:
             continue
         messages.append({"role": "user", "content": user_input})
-        result = await Runner.run(agent, input=messages, max_turns=MAX_TURNS)
-        messages = result.to_input_list()
-        print(f"\nAgent: {result.final_output}\n")
+        answer, messages = await _run(messages, tools)
+        print(f"\nAgent: {answer}\n")
 
 
 if __name__ == "__main__":
