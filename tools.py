@@ -64,7 +64,7 @@ def buscar_licitacoes(
     return json.dumps(result, ensure_ascii=False)
 
 
-def obter_itens_licitacao(
+def listar_itens_licitacao(
     cnpj_orgao: str,
     ano: int,
     sequencial: int,
@@ -83,7 +83,7 @@ def obter_itens_licitacao(
     return json.dumps(get_tender_items(cnpj_orgao, ano, sequencial), ensure_ascii=False)
 
 
-def obter_resultado_item_licitacao(
+def listar_resultados_item(
     cnpj_orgao: str,
     ano: int,
     sequencial: int,
@@ -98,12 +98,12 @@ def obter_resultado_item_licitacao(
         cnpj_orgao: CNPJ do órgão responsável
         ano: Ano da licitação
         sequencial: Número sequencial da licitação
-        numero_item: Campo 'numeroItem' retornado por obter_itens_licitacao
+        numero_item: Campo 'numeroItem' retornado por listar_itens_licitacao
     """
     return json.dumps(get_tender_item_results(cnpj_orgao, ano, sequencial, numero_item), ensure_ascii=False)
 
 
-def obter_documentos_licitacao(
+def listar_documentos_licitacao(
     cnpj_orgao: str,
     ano: int,
     sequencial: int,
@@ -121,7 +121,7 @@ def obter_documentos_licitacao(
     return json.dumps(get_tender_documents(cnpj_orgao, ano, sequencial), ensure_ascii=False)
 
 
-def obter_historico_licitacao(
+def listar_historico_licitacao(
     cnpj_orgao: str,
     ano: int,
     sequencial: int,
@@ -162,8 +162,8 @@ def extrair_dados_url_pncp(url: str) -> str:
 FERRAMENTAS = [
     buscar_licitacoes,
     extrair_dados_url_pncp,
-    obter_itens_licitacao,
-    obter_resultado_item_licitacao,
-    obter_documentos_licitacao,
-    obter_historico_licitacao,
+    listar_itens_licitacao,
+    listar_resultados_item,
+    listar_documentos_licitacao,
+    listar_historico_licitacao,
 ]
