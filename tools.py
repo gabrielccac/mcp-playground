@@ -24,13 +24,9 @@ def buscar_licitacoes(
         "recebendo_proposta", "propostas_encerradas", "encerradas",
         "vigente", "nao_vigente",
     ] | None = None,
-    uf: Literal[
-        "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA",
-        "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN",
-        "RS", "RO", "RR", "SC", "SP", "SE", "TO"
-    ] | None = None,
-    modalidade: int | None = None,
-    esfera: Literal["F", "E", "D", "M"] | None = None,
+    uf: str | None = None,
+    modalidade: str | None = None,
+    esfera: str | None = None,
     pagina: int = 1,
     quantidade: int = 10,
 ) -> str:
@@ -44,10 +40,12 @@ def buscar_licitacoes(
         status: Situação do edital — 'recebendo_proposta' (abertas), 'propostas_encerradas'
                 (em julgamento), 'encerradas' (concluídas, resultados disponíveis).
                 Para contratos use 'vigente' ou 'nao_vigente'. Vazio retorna todos.
-        uf: Sigla do estado (ex: 'SP', 'RJ', 'MG'). Vazio busca em todo o Brasil.
+        uf: Sigla do estado. Múltiplos separados por '|' (ex: 'SP', 'AC|AM'). Vazio busca em todo o Brasil.
         modalidade: Código da modalidade — 6=Pregão Eletrônico, 7=Pregão Presencial,
                     8=Dispensa de Licitação, 9=Inexigibilidade, 4=Concorrência Eletrônica.
-        esfera: Esfera de governo — 'F' (Federal), 'E' (Estadual), 'D' (Distrital), 'M' (Municipal)
+                    Múltiplos separados por '|' (ex: '6|8').
+        esfera: Esfera de governo — 'F' (Federal), 'E' (Estadual), 'D' (Distrital), 'M' (Municipal).
+                Múltiplos separados por '|' (ex: 'F|E').
         pagina: Número da página (padrão: 1)
         quantidade: Resultados por página (padrão: 10, máximo recomendado: 50)
     """

@@ -18,17 +18,13 @@ _session = requests.Session(impersonate="chrome")
 TipoDocumento = Literal["edital", "ata", "contrato"]
 Ordenacao     = Literal["-data", "data", "relevancia"]
 Status        = Literal[
-    "recebendo_proposta", "propostas_encerradas", "em_julgamento",
-    "homologada", "revogada", "anulada", "cancelada",
+    "recebendo_proposta", "propostas_encerradas", "encerradas",
+    "vigente", "nao_vigente",
 ]
-Esfera        = Literal["F", "E", "D", "M"]
-Poder         = Literal["E", "L", "J", "M", "D"]
-UF            = Literal[
-    "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA",
-    "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN",
-    "RS", "RO", "RR", "SC", "SP", "SE", "TO",
-]
-Modalidade    = Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+Esfera        = str  # "F", "E", "D", "M" — pipe-separated for multiple, e.g. "F|E"
+Poder         = str  # "E", "L", "J", "M", "D" — pipe-separated for multiple
+UF            = str  # state code(s) — pipe-separated for multiple, e.g. "AC|AM"
+Modalidade    = str  # modality code(s) — pipe-separated for multiple, e.g. "6|8"
 
 
 def _get(url: str, params: dict | None = None) -> requests.Response:
